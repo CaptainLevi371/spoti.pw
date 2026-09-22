@@ -89,7 +89,7 @@ FILES=("$TWEAK_DEB")
 [ "$WITH_FLEX" = 1 ] && FILES+=("$FLEX_DEB")
 # Download and append EeveeSpotify
 echo "==> Downloading EeveeSpotify..."
-curl -L -o "$ROOT/out/eevee.deb" "https://github.com/whoeevee/EeveeSpotifyReborn/releases/download/swift6.2.2/com.eevee.spotify_6.2.2_iphoneos-arm64.deb"
+curl -L -o "$ROOT/out/eevee.deb" "https://github.com/whoeevee/EeveeSpotifyReborn/releases/download/swift6.2.2/com.eevee.spotify_6.2.2_iphoneos-arm.deb"
 FILES+=("$ROOT/out/eevee.deb")
 
 # The Live Activity (Shared/LiveActivity) draws in a widget extension of its own.
