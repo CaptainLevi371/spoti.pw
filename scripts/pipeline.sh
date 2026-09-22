@@ -1,8 +1,3 @@
-Here is the updated script. I have added a step to automatically download the EeveeSpotify `.deb` file into your `out/` directory using `curl` and append it to the injection list.
-
-I also noticed a small bug in your original script where your built tweak (`$TWEAK_DEB`) and FLEX (`$FLEX_DEB`) weren't actually being added to the `FILES` array for `cyan` to inject. I fixed that as well so everything bundles correctly for non-jailbroken sideloading.
-
-```bash
 #!/usr/bin/env bash
 # Builds the spotifyglass tweak and injects it (plus FLEX) into a decrypted Spotify IPA.
 #
@@ -153,5 +148,3 @@ fi
 echo "==> done: $OUT"
 [ "$INSTALL" = 1 ] && exec "$ROOT/scripts/install.sh" "$OUT"
 exit 0
-
-```
