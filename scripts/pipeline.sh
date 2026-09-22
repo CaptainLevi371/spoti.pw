@@ -1,3 +1,8 @@
+Here is the updated script. I have added a step to automatically download the EeveeSpotify `.deb` file into your `out/` directory using `curl` and append it to the injection list.
+
+I also noticed a small bug in your original script where your built tweak (`$TWEAK_DEB`) and FLEX (`$FLEX_DEB`) weren't actually being added to the `FILES` array for `cyan` to inject. I fixed that as well so everything bundles correctly for non-jailbroken sideloading.
+
+```bash
 #!/usr/bin/env bash
 # Builds the spotifyglass tweak and injects it (plus FLEX) into a decrypted Spotify IPA.
 #
@@ -7,7 +12,7 @@
 #
 # The IPA is yours to supply: drop a decrypted Spotify .ipa in ipa/ and the Makefile finds it.
 #
-# Needs: Theos in $THEOS (default ~/theos), an iPhoneOS 26+ SDK from the selected Xcode or in $THEOS/sdks,
+# Needs: Theos in $THEOS (default ~/theos), an iPhoneOS 26+ SDK from the selected Xcode or in$THEOS/sdks,
 # gmake, ldid, dpkg-deb (brew) and cyan (uv tool install "cyan @ git+https://github.com/asdfzxcvbn/pyzule-rw").
 set -euo pipefail
 
@@ -64,7 +69,7 @@ rm -f "$ROOT/out/.info.plist"
 MOD_VERSION="$(cat "$ROOT/version.txt" 2>/dev/null || true)"
 : "${MOD_VERSION:=0.0.0}"
 OUT="${OUT:-$ROOT/out/spoti.pw-$MOD_VERSION.ipa}"
-echo "==> spoti.pw $MOD_VERSION on Spotify $SPOTIFY_VERSION -> $OUT"
+echo "==> spoti.pw $MOD_VERSION on Spotify $SPOTIFY_VERSION ->$OUT"
 
 # The flag table is generated rather than committed, so it always matches the IPA being built.
 if [ ! -f "$ROOT/tweak/Sources/Shared/Flags/SGFlagList.m" ]; then
@@ -85,6 +90,12 @@ env -u MAKELEVEL gmake -C "$ROOT/tweak" clean package >/dev/null
 TWEAK_DEB="$(ls -t "$ROOT"/tweak/packages/*.deb | head -1)"
 echo "    $TWEAK_DEB"
 
+# --- FIX: Initialize the FILES array with the compiled tweak and FLEX (if enabled) ---
+FILES=("$TWEAK_DEB")
+if [ "$WITH_FLEX" = 1 ] && [ -f "$FLEX_DEB" ]; then
+  FILES+=("$FLEX_DEB")
+fi
+
 # The Live Activity (Shared/LiveActivity) draws in a widget extension of its own.
 if xcrun --sdk iphoneos --find swiftc >/dev/null 2>&1; then
   EXT_DIR="$ROOT/out/extension"
@@ -103,6 +114,16 @@ GROUPS_DYLIB="$ROOT/out/SpotifyGlassAppGroups.dylib"
 xcrun --sdk iphoneos clang -target arm64-apple-ios16.0 -dynamiclib -fobjc-arc -Os -framework Foundation -framework Security \
   -install_name @rpath/SpotifyGlassAppGroups.dylib -o "$GROUPS_DYLIB" "$ROOT/extension/AppGroups/AppGroups.m"
 FILES+=("$GROUPS_DYLIB")
+
+# --- NEW: Download and add EeveeSpotify ---
+echo "==> checking for EeveeSpotify"
+EEVEE_URL="https://github.com/SideloadLabs/EeveeSpotifyReincarnated/releases/download/v6.6.8/com.eevee.spotify_6.6.8_iphoneos-arm64.deb"
+EEVEE_DEB="$ROOT/out/com.eevee.spotify_6.6.8_iphoneos-arm64.deb"
+if [ ! -f "$EEVEE_DEB" ]; then
+  echo "    Downloading EeveeSpotify from GitHub..."
+  curl -L -o "$EEVEE_DEB" "$EEVEE_URL"
+fi
+FILES+=("$EEVEE_DEB")
 
 echo "==> injecting"
 # -w drops the Watch app: its companion-app key would still name com.spotify.client and block the install.
@@ -132,3 +153,5 @@ fi
 echo "==> done: $OUT"
 [ "$INSTALL" = 1 ] && exec "$ROOT/scripts/install.sh" "$OUT"
 exit 0
+
+```
